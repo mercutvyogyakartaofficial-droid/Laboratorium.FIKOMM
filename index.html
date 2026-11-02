@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Peminjaman Laboratorium Fikomm</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .wix-shadow { box-shadow: 0 8px 30px rgba(0,0,0,0.04); }
+        .hover-zoom img { transition: transform 0.4s ease; }
+        .hover-zoom:hover img { transform: scale(1.05); }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col h-full overflow-y-auto hidden md:flex shrink-0 transition-colors duration-200">
+        <!-- Logo & Theme Toggle -->
+        <div class="p-5 flex justify-between items-center border-b border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-3">
+                <img src="https://drive.google.com/thumbnail?id=1Mw6VO6mLpKZazBygIdziq10mgIKbxH7j&sz=w800" alt="Logo Fikomm" class="w-10 h-10 rounded-full object-cover bg-white dark:bg-slate-800 p-0.5 border border-gray-200 dark:border-slate-600">
+                <h1 class="text-xl font-bold text-blue-700 dark:text-blue-400 leading-tight">Lab<br>Fikomm</h1>
+            </div>
+            <button onclick="toggleTheme()" class="text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-300 transition-colors p-2">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
+            </button>
+        </div>
+
+        <!-- Menu Navigation -->
+        <nav class="flex-1 px-4 py-6 space-y-6">
+            <!-- Menu Utama -->
+            <div>
+                <p class="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">Katalog Layanan</p>
+                <a href="#" onclick="switchMenu('semua')" id="menu-semua" class="menu-item flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 transition-colors">
+                    <i class="fas fa-th-large w-5 text-center"></i> Semua Katalog
+                </a>
+                <a href="#" onclick="switchMenu('alat')" id="menu-alat" class="menu-item flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-slate-700/50 transition-colors mt-1">
+                    <i class="fas fa-video w-5 text-center"></i> Peminjaman Alat
+                </a>
+                <a href="#" onclick="switchMenu('ruangan')" id="menu-ruangan" class="menu-item flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-slate-700/50 transition-colors mt-1">
+                    <i class="fas fa-door-open w-5 text-center"></i> Peminjaman Ruangan
+                </a>
+                <a href="#" onclick="openCartModal()" id="menu-keranjang" class="menu-item flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-slate-700/50 transition-colors mt-1">
+                    <span class="flex items-center gap-3"><i class="fas fa-shopping-cart w-5 text-center"></i> Keranjang Peminjaman</span>
+                    <span id="sidebarCartBadge" class="hidden bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full items-center justify-center shadow">0</span>
+                </a>
+            </div>
+
+            <!-- Ringkasan Info (Stats) -->
+            <div class="px-4">
+                <div class="bg-blue-50 dark:bg-slate-700/50 rounded-xl p-4 border border-blue-100 dark:border-slate-600">
+                    <h3 class="text-xs font-bold text-blue-800 dark:text-blue-300 mb-3 uppercase tracking-wider">Info Inventaris</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600 dark:text-gray-300">Total Macam Alat</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white" id="stat-total-macam">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600 dark:text-gray-300">Total Unit Stok</span>
+                            <span class="text-sm font-bold text-green-600 dark:text-green-400" id="stat-total-unit">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Petugas -->
+            <div id="petugasMenuContainer" class="hidden">
+                <p class="px-4 text-[10px] font-bold text-red-400 mb-2 uppercase tracking-wider">Manajemen Admin</p>
+                <a href="#" onclick="openPetugasPanel()" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-300 dark:hover:bg-slate-700/50 dark:hover:text-red-400 rounded-lg transition-colors">
+                    <i class="fas fa-shield-alt w-5 text-center"></i> Panel Petugas
+                </a>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100 dark:border-slate-700">
+            <button onclick="openLoginModal()" id="btn-login-petugas" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                <i class="fas fa-sign-in-alt"></i> Login Petugas
+            </button>
+            <button onclick="logoutPetugas()" id="btn-logout-petugas" class="hidden w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Navbar Atas -->
+        <header class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 h-16 flex items-center justify-between px-6 shrink-0 transition-colors duration-200">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gray-500 dark:text-gray-400"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white" id="mainTitle">Katalog Inventaris</h2>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center text-xs font-semibold text-gray-500 dark:text-gray-400 mr-2" id="syncStatus">
+                    <i class="fas fa-cloud-check text-green-500 mr-1"></i> Data Tersinkronisasi
+                </div>
+                
+                <!-- Tombol Keranjang -->
+                <button onclick="openCartModal()" class="relative p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span id="cartBadge" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center -mt-1 -mr-1 shadow">0</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Area Konten (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative">
+            
+            <!-- Pencarian & Filter -->
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <div class="relative flex-1">
+                    <input type="text" id="searchInput" placeholder="Cari nama, ID, atau kategori..." 
+                        class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-sm rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-all shadow-sm">
+                    <i class="fas fa-search absolute left-5 top-4 text-gray-400"></i>
+                </div>
+                <div class="w-full md:w-48 shrink-0">
+                    <select id="categoryFilter" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white shadow-sm cursor-pointer">
+                        <option value="Semua">Semua Kategori</option>
+                        <option value="Broadcasting">Broadcasting</option>
+                        <option value="Fasilitas Ruangan">Fasilitas Ruangan</option>
+                        <option value="Optik">Optik</option>
+                        <option value="Elektronik">Elektronik</option>
+                        <option value="Audio">Audio</option>
+                        <option value="Lighting">Lighting</option>
+                        <option value="Aksesoris">Aksesoris</option>
+                        <option value="Gelas">Gelas</option>
+                        <option value="Mesin">Mesin Lab</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid Katalog -->
+            <div id="katalog-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Data akan dimuat melalui JavaScript -->
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-blue-500"></i>
+                    <p>Memuat dan Sinkronisasi Data...</p>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- MODAL KERANJANG & FORM PINJAM -->
+    <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <!-- Header Modal -->
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-700/50">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-shopping-cart text-blue-600 dark:text-blue-400"></i> Form Pengajuan Peminjaman
+                </h3>
+                <button onclick="closeCartModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-8">
+                <!-- Bagian Kiri: List Barang (Keranjang) -->
+                <div class="flex-1 flex flex-col">
+                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 border-b border-gray-100 dark:border-slate-700 pb-2">
+                        Daftar Pilihan (<span id="formCartCount">0</span> Item)
+                    </h4>
+                    <div id="cartItemsContainer" class="flex-1 overflow-y-auto space-y-3 pr-2 min-h-[200px]">
+                        <!-- Item keranjang dirender di sini -->
+                    </div>
+                </div>
+
+                <!-- Bagian Kanan: Form Identitas -->
+                <div class="w-full md:w-[350px] bg-gray-50 dark:bg-slate-700/30 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shrink-0 h-fit space-y-4">
+                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Identitas & Waktu</h4>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Nomor Peminjam *</label>
+                        <input type="text" id="inputNomorPeminjam" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500 bg-gray-100 font-mono" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Nama Lengkap *</label>
+                        <input type="text" id="inputNama" required placeholder="Contoh: Budi Santoso" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-1">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">NIM / NIK *</label>
+                            <input type="text" id="inputNim" required placeholder="1234567" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">No WhatsApp *</label>
+                            <input type="text" id="inputWa" required placeholder="0812..." class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Konsentrasi *</label>
+                        <select id="inputProdi" required class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">Pilih Konsentrasi...</option>
+                            <option value="Broadcasting">Broadcasting</option>
+                            <option value="Public Relation">Public Relation</option>
+                            <option value="Marketing Communication">Marketing Communication</option>
+                            <option value="Lainnya">Lainnya / Umum</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Dosen Pengampu *</label>
+                        <input type="text" id="inputDosen" required placeholder="Nama Dosen (Jika untuk tugas)" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-1">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Tgl & Jam Pinjam *</label>
+                            <div class="flex gap-1">
+                                <input type="date" id="inputTanggal" required class="w-1/2 px-2 py-2 text-xs border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                                <input type="time" id="inputJamPinjam" required class="w-1/2 px-2 py-2 text-xs border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Rencana Kembali *</label>
+                            <div class="flex gap-1">
+                                <input type="date" id="inputTanggalKembali" required class="w-1/2 px-2 py-2 text-xs border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                                <input type="time" id="inputJamKembali" required class="w-1/2 px-2 py-2 text-xs border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Keperluan Peminjaman *</label>
+                        <textarea id="inputKeperluan" required rows="2" placeholder="Sebutkan mata kuliah / acara / keperluan" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:border-blue-500 resize-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-5 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800">
+                <button onclick="closeCartModal()" class="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-slate-700 dark:text-white dark:border-slate-600 dark:hover:bg-slate-600 transition-colors">Batal</button>
+                <button onclick="reviewPeminjaman()" class="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    Lanjut Konfirmasi <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI (STEP 2) -->
+    <div id="konfirmasiModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[60] p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all">
+            <div class="bg-blue-600 p-5 text-center relative">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600 text-xl shadow-lg">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h3 class="font-bold text-lg text-white">Konfirmasi Peminjaman</h3>
+                <p class="text-blue-100 text-xs">Periksa kembali data Anda sebelum disubmit</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="bg-gray-50 dark:bg-slate-700/50 p-4 rounded-xl border border-gray-100 dark:border-slate-600 text-sm">
+                    <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Peminjam:</p>
+                    <p class="font-bold text-gray-800 dark:text-white mb-2" id="confNamaPeminjam">-</p>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400">NIM / Konsentrasi:</p>
+                            <p class="font-semibold text-gray-800 dark:text-white" id="confNimProdi">-</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400">WhatsApp:</p>
+                            <p class="font-semibold text-gray-800 dark:text-white" id="confWa">-</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Dosen Pengampu:</p>
+                    <p class="font-semibold text-gray-800 dark:text-white mb-3" id="confDosen">-</p>
+
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Waktu Pinjam - Kembali:</p>
+                    <p class="font-semibold text-gray-800 dark:text-white mb-3" id="confTanggal">-</p>
+                    
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Barang/Ruang dipinjam:</p>
+                    <ul id="confItems" class="list-disc pl-5 mt-1 font-semibold text-gray-800 dark:text-white max-h-24 overflow-y-auto"></ul>
+                </div>
+
+                <div class="flex items-start gap-3 mt-4 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700/50">
+                    <input type="checkbox" id="checkSetujuPinjam" class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded cursor-pointer">
+                    <label for="checkSetujuPinjam" class="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
+                        Saya bertanggung jawab atas alat/ruang ini. Saya bersedia/telah melakukan konfirmasi ke 
+                        <a href="https://api.whatsapp.com/send/?phone=6285158173155&text=Halo%20Admin%20Lab%20Fikomm,%20saya%20ingin%20konfirmasi%20peminjaman.&type=phone_number&app_absent=0" target="_blank" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                            <i class="fab fa-whatsapp"></i> Hotline WA Lab Fikomm
+                        </a>.
+                    </label>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-gray-100 dark:border-slate-700 flex gap-3">
+                <button onclick="document.getElementById('konfirmasiModal').classList.add('hidden')" class="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 transition-colors">Periksa / Edit</button>
+                <button onclick="submitPeminjaman()" class="flex-1 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50" id="btnSubmitFinal">Konfirmasi Pinjam</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TIKET BUKTI PINJAM -->
+    <div id="buktiPinjamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[70] p-4">
+        <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl relative print:w-full print:max-w-none print:shadow-none">
+            <!-- Pola Potongan Kertas -->
+            <div class="absolute -left-3 top-20 w-6 h-6 bg-black/80 rounded-full print:hidden"></div>
+            <div class="absolute -right-3 top-20 w-6 h-6 bg-black/80 rounded-full print:hidden"></div>
+            <div class="border-b-2 border-dashed border-gray-300 absolute w-full top-[92px] z-0"></div>
+            
+            <div class="p-6 relative z-10 text-center bg-white text-gray-800">
+                <i class="fas fa-check-circle text-5xl text-green-500 mb-2"></i>
+                <h3 class="font-black text-xl mb-1 uppercase tracking-wider text-gray-900">Tiket Peminjaman</h3>
+                <p class="text-[10px] text-gray-500 mb-6 uppercase">Menunggu Konfirmasi Petugas</p>
+                
+                <div class="text-left text-sm space-y-2 mb-6 bg-gray-50 p-4 rounded border border-gray-100" id="receiptDetailBox">
+                    <!-- Data Receipt -->
+                </div>
+                
+                <div class="flex justify-center mb-6">
+                    <div class="w-32 h-32 bg-gray-100 flex items-center justify-center rounded border border-gray-200">
+                        <i class="fas fa-qrcode text-6xl text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <p class="text-[10px] text-gray-400 mb-6">* Tunjukkan tiket ini (atau screenshot) kepada petugas jaga Laboratorium untuk verifikasi.</p>
+                
+                <button onclick="tutupBuktiDanReset()" class="w-full py-3 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors print:hidden shadow-lg">
+                    Selesai & Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN UMUM -->
+    <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-xs p-6 shadow-2xl transform transition-all relative">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fas fa-times text-xl"></i></button>
+            <div class="text-center mb-6 mt-2">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-slate-700 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-user-shield text-xl"></i>
+                </div>
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white">Akses Petugas</h3>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Kata Sandi</label>
+                    <div class="relative">
+                        <input type="password" id="inputPassword" placeholder="••••••••" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                        <i class="fas fa-eye absolute right-3 top-3 text-gray-400 cursor-pointer hover:text-gray-600" onclick="togglePasswordVisibility('inputPassword', this)"></i>
+                    </div>
+                    <p id="loginError" class="text-xs text-red-500 mt-1 hidden">Password salah.</p>
+                </div>
+                <button onclick="verifyLogin()" class="w-full py-2.5 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                    Masuk
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL PETUGAS MODAL FULLSCREEN -->
+    <div id="petugasPanelModal" class="fixed inset-0 bg-slate-100 dark:bg-slate-900 hidden flex-col z-[100] transition-colors duration-200">
+        <!-- Header -->
+        <header class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 h-16 flex items-center justify-between px-6 shrink-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-red-100 text-red-600 rounded flex items-center justify-center"><i class="fas fa-shield-alt"></i></div>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white">Panel Administrasi Petugas</h2>
+            </div>
+            <button onclick="closePetugasPanel()" class="text-gray-500 hover:text-red-500 bg-gray-100 hover:bg-red-50 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-300 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 pt-3 flex gap-6 overflow-x-auto">
+            <button onclick="switchAdminTab('tab-peminjaman')" id="btn-tab-peminjaman" class="admin-tab text-sm font-bold text-blue-600 border-b-2 border-blue-600 pb-3 px-2 whitespace-nowrap">
+                <i class="fas fa-clipboard-list mr-1"></i> Data Peminjaman
+            </button>
+            <button onclick="switchAdminTab('tab-stok')" id="btn-tab-stok" class="admin-tab text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border-b-2 border-transparent pb-3 px-2 whitespace-nowrap">
+                <i class="fas fa-boxes mr-1"></i> Kelola Stok & Status
+            </button>
+            <button onclick="switchAdminTab('tab-tambah')" id="btn-tab-tambah" class="admin-tab text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border-b-2 border-transparent pb-3 px-2 whitespace-nowrap">
+                <i class="fas fa-plus-circle mr-1"></i> Tambah Item Baru
+            </button>
+        </div>
+
+        <!-- Content Tabs -->
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900">
+            
+            <!-- Tab 1: Peminjaman -->
+            <div id="tab-peminjaman" class="admin-tab-content space-y-4">
+                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+                    <h3 class="font-bold text-gray-800 dark:text-white">Riwayat & Pengembalian</h3>
+                    <div class="flex items-center gap-4 text-sm font-semibold">
+                        <div class="text-center px-4 border-r border-gray-200 dark:border-slate-600">
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs uppercase">Menunggu</span>
+                            <span class="text-orange-500 text-lg" id="stat-menunggu">0</span>
+                        </div>
+                        <div class="text-center px-4 border-r border-gray-200 dark:border-slate-600">
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs uppercase">Dipinjam</span>
+                            <span class="text-blue-600 text-lg" id="stat-dipinjam">0</span>
+                        </div>
+                        <div class="text-center pl-4">
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs uppercase">Selesai</span>
+                            <span class="text-green-500 text-lg" id="stat-selesai">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-slate-700">
+                                    <th class="py-3 px-4 font-semibold">Waktu Pinjam & Status</th>
+                                    <th class="py-3 px-4 font-semibold">Peminjam</th>
+                                    <th class="py-3 px-4 font-semibold">Daftar Item (Qty)</th>
+                                    <th class="py-3 px-4 font-semibold text-right">Aksi Petugas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablePeminjamanBody" class="text-sm divide-y divide-gray-100 dark:divide-slate-700">
+                                <!-- Data Peminjaman Petugas Render Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Stok & Status -->
+            <div id="tab-stok" class="admin-tab-content hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 dark:text-white">Manajemen Stok Aktual</h3>
+                    <input type="text" id="searchAdminStok" placeholder="Cari item..." class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-slate-700">
+                                    <th class="py-3 px-4 font-semibold w-12">ID</th>
+                                    <th class="py-3 px-4 font-semibold">Item & Kategori</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-32">Ubah Stok Unit</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-40">Status Kondisi</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-20">Hapus</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableStokBody" class="text-sm divide-y divide-gray-100 dark:divide-slate-700">
+                                <!-- Data Stok Admin Render Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Tambah Item -->
+            <div id="tab-tambah" class="admin-tab-content hidden">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm max-w-2xl mx-auto">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-6 border-b border-gray-100 dark:border-slate-700 pb-2">Form Tambah Katalog Baru</h3>
+                    
+                    <form id="formTambahAlat" onsubmit="event.preventDefault(); tambahAlatBaru();" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">ID (Otomatis)</label>
+                                <input type="text" id="newId" class="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-500" readonly>
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Kategori/Jenis</label>
+                                <select id="newKategori" required class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option value="Broadcasting">Broadcasting</option>
+                                    <option value="Fasilitas Ruangan">Fasilitas Ruangan</option>
+                                    <option value="Optik">Optik</option>
+                                    <option value="Elektronik">Elektronik</option>
+                                    <option value="Audio">Audio</option>
+                                    <option value="Lighting">Lighting</option>
+                                    <option value="Aksesoris">Aksesoris</option>
+                                    <option value="Gelas">Gelas</option>
+                                    <option value="Mesin">Mesin Lab</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nama Item Lengkap</label>
+                            <input type="text" id="newNama" required placeholder="Contoh: Kamera Sony A7 IV" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Spesifikasi Singkat</label>
+                            <input type="text" id="newSpek" placeholder="Contoh: 4K Video, Fullframe..." class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Jumlah Stok Unit</label>
+                                <input type="number" id="newStok" required min="1" value="1" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Link Gambar (Google Drive)</label>
+                            <input type="url" id="newGambar" placeholder="https://drive.google.com/file/d/..." class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:border-blue-500 mb-2" oninput="previewNewImage()">
+                            <div class="w-full h-40 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg flex items-center justify-center overflow-hidden p-2">
+                                <img id="previewImage" src="" alt="Preview" class="max-h-full hidden">
+                                <span id="previewPlaceholder" class="text-xs text-gray-400">Preview Gambar</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100 dark:border-slate-700 flex justify-end">
+                            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-save mr-1"></i> Simpan Item Baru
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script Integrasi JavaScript & Logika Web -->
+    <script>
+        // ======= PENGATURAN KONEKSI GOOGLE SHEET =======
+        const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzm3HVVSMWaRsuLWRC1UepykHHwaAa7xFHMpaxFAT-QnQ17sK_Fatt3uCwRhftWFuxi/exec';
+        const GOOGLE_SHEET_ID = '1TDfsWQNSmwHWFhr6VzmcCSfV89KBSY4qVa9U2slCqlo';
+
+        // ======= VARIABEL STATE (LOCALSTORAGE v4) =======
+        const STORAGE_KEY_ALAT = 'fikomm_alat_v4';
+        const STORAGE_KEY_PINJAM = 'fikomm_pinjam_v4';
+        
+        let dataAlatLab = [];
+        let dataPeminjaman = [];
+        let cart = []; // Keranjang peminjaman
+        let pendingLoanDraft = null;
+        let currentMenu = 'semua';
+        let isSyncing = false;
+
+        // Data Bawaan (Default Data - 23 Alat + 3 Ruang) jika Sheet kosong / Pertama buka
+        const defaultAlat = [
+            { ID_Alat: 'RNG-01', Nama_Alat: 'LAB BROADCASTING (TV & RADIO)', Kategori: 'Fasilitas Ruangan', Stok_Tersedia: 1, Kondisi: 'Baik', Spesifikasi: 'Studio Green Screen, Control Room', Gambar_URL: 'https://images.unsplash.com/photo-1598075727181-42065da5a065?w=400&q=80' },
+            { ID_Alat: 'RNG-02', Nama_Alat: 'LAB PUBLIC RELATIONS', Kategori: 'Fasilitas Ruangan', Stok_Tersedia: 1, Kondisi: 'Baik', Spesifikasi: 'Ruang Konferensi Pers, Presentasi', Gambar_URL: 'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=400&q=80' },
+            { ID_Alat: 'RNG-03', Nama_Alat: 'LAB MARKETING COMMUNICATION', Kategori: 'Fasilitas Ruangan', Stok_Tersedia: 1, Kondisi: 'Baik', Spesifikasi: 'Ruang Riset, Diskusi Kreatif', Gambar_URL: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=400&q=80' },
+            { ID_Alat: 'CAM-01', Nama_Alat: 'KAMERA SONY ALPHA A7S III', Kategori: 'Broadcasting', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: '4K 120p, 10-bit', Gambar_URL: 'https://images.unsplash.com/photo-1516724562728-afc824a36e84?w=400&q=80' },
+            { ID_Alat: 'CAM-02', Nama_Alat: 'KAMERA CANON EOS R5', Kategori: 'Broadcasting', Stok_Tersedia: 1, Kondisi: 'Baik', Spesifikasi: '8K Video', Gambar_URL: 'https://images.unsplash.com/photo-1629130752495-20092f693e50?w=400&q=80' },
+            { ID_Alat: 'CAM-03', Nama_Alat: 'PANASONIC LUMIX GH5', Kategori: 'Broadcasting', Stok_Tersedia: 3, Kondisi: 'Baik', Spesifikasi: 'MFT 4K', Gambar_URL: 'https://images.unsplash.com/photo-1599818828343-41bb3356e72c?w=400&q=80' },
+            { ID_Alat: 'LNS-01', Nama_Alat: 'LENSA CANON EF 50MM F/1.8', Kategori: 'Broadcasting', Stok_Tersedia: 4, Kondisi: 'Baik', Spesifikasi: 'Prime Lens', Gambar_URL: 'https://images.unsplash.com/photo-1516961642265-531546e84af2?w=400&q=80' },
+            { ID_Alat: 'LNS-02', Nama_Alat: 'LENSA SONY FE 24-70MM', Kategori: 'Broadcasting', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: 'Zoom G Master', Gambar_URL: 'https://images.unsplash.com/photo-1500634245200-e5245c7574ef?w=400&q=80' },
+            { ID_Alat: 'AUD-01', Nama_Alat: 'RODE NTG4+ SHOTGUN MIC', Kategori: 'Audio', Stok_Tersedia: 3, Kondisi: 'Baik', Spesifikasi: 'Directional', Gambar_URL: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&q=80' },
+            { ID_Alat: 'AUD-02', Nama_Alat: 'ZOOM H6 HANDY RECORDER', Kategori: 'Audio', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: '6-Track', Gambar_URL: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&q=80' },
+            { ID_Alat: 'AUD-03', Nama_Alat: 'SENNHEISER EW 112P G4', Kategori: 'Audio', Stok_Tersedia: 4, Kondisi: 'Baik', Spesifikasi: 'Wireless Lav', Gambar_URL: 'https://images.unsplash.com/photo-1628198944583-bf01004bb619?w=400&q=80' },
+            { ID_Alat: 'LIG-01', Nama_Alat: 'GODOX SL-60W LED VIDEO LIGHT', Kategori: 'Lighting', Stok_Tersedia: 4, Kondisi: 'Baik', Spesifikasi: 'Daylight 5600K', Gambar_URL: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80' },
+            { ID_Alat: 'LIG-02', Nama_Alat: 'APUTURE 120D II STUDIO LIGHT', Kategori: 'Lighting', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: 'Studio LED', Gambar_URL: 'https://images.unsplash.com/photo-1579679124446-f9493922c069?w=400&q=80' },
+            { ID_Alat: 'LIG-03', Nama_Alat: 'NEEWER RING LIGHT 18 INCH', Kategori: 'Lighting', Stok_Tersedia: 5, Kondisi: 'Baik', Spesifikasi: 'With Stand', Gambar_URL: 'https://images.unsplash.com/photo-1590059914801-b7df25555d4b?w=400&q=80' },
+            { ID_Alat: 'ACC-01', Nama_Alat: 'DJI RS 3 GIMBAL STABILIZER', Kategori: 'Aksesoris', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: '3-Axis', Gambar_URL: 'https://images.unsplash.com/photo-1605648816773-89ea2738914c?w=400&q=80' },
+            { ID_Alat: 'ACC-02', Nama_Alat: 'TRIPOD MANFROTTO 504X', Kategori: 'Aksesoris', Stok_Tersedia: 4, Kondisi: 'Baik', Spesifikasi: 'Fluid Head', Gambar_URL: 'https://images.unsplash.com/photo-1527003444857-e6f534151a61?w=400&q=80' },
+            { ID_Alat: 'ACC-03', Nama_Alat: 'BLACKMAGIC ATEM MINI PRO', Kategori: 'Broadcasting', Stok_Tersedia: 1, Kondisi: 'Baik', Spesifikasi: 'Switcher', Gambar_URL: 'https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=400&q=80' },
+            { ID_Alat: 'ACC-04', Nama_Alat: 'MONITOR FEELWORLD F6 PLUS', Kategori: 'Aksesoris', Stok_Tersedia: 3, Kondisi: 'Baik', Spesifikasi: '5.5 inch', Gambar_URL: 'https://images.unsplash.com/photo-1598075727181-42065da5a065?w=400&q=80' },
+            { ID_Alat: 'ACC-05', Nama_Alat: 'SD CARD SANDISK EXTREME 128GB', Kategori: 'Aksesoris', Stok_Tersedia: 10, Kondisi: 'Baik', Spesifikasi: '150MB/s', Gambar_URL: 'https://images.unsplash.com/photo-1624445831610-8b22a00c5c4e?w=400&q=80' },
+            { ID_Alat: 'ACC-06', Nama_Alat: 'GREEN SCREEN BACKDROP 3X6M', Kategori: 'Aksesoris', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: 'Kain Hijau', Gambar_URL: 'https://images.unsplash.com/photo-1516724562728-afc824a36e84?w=400&q=80' },
+            { ID_Alat: 'L-01', Nama_Alat: 'MIKROSKOP BINOKULER OLYMPUS', Kategori: 'Optik', Stok_Tersedia: 5, Kondisi: 'Baik', Spesifikasi: 'CX23', Gambar_URL: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&q=80' },
+            { ID_Alat: 'L-02', Nama_Alat: 'OSILOSKOP DIGITAL TEKTRONIX', Kategori: 'Elektronik', Stok_Tersedia: 2, Kondisi: 'Baik', Spesifikasi: 'Digital', Gambar_URL: 'https://images.unsplash.com/photo-1588523315750-671e72e811c7?w=400&q=80' },
+            { ID_Alat: 'L-03', Nama_Alat: 'CENTRIFUGE LABORATORY', Kategori: 'Mesin Lab', Stok_Tersedia: 8, Kondisi: 'Baik', Spesifikasi: '4000 RPM', Gambar_URL: 'https://images.unsplash.com/photo-1631557088950-8302fbc5ea8a?w=400&q=80' },
+            { ID_Alat: 'L-04', Nama_Alat: 'GELAS BEAKER BOROSILIKAT', Kategori: 'Gelas', Stok_Tersedia: 24, Kondisi: 'Baik', Spesifikasi: '500ML', Gambar_URL: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&q=80' },
+            { ID_Alat: 'L-05', Nama_Alat: 'MULTIMETER DIGITAL FLUKE 117', Kategori: 'Elektronik', Stok_Tersedia: 10, Kondisi: 'Baik', Spesifikasi: 'Fluke 117', Gambar_URL: 'https://images.unsplash.com/photo-1588523315750-671e72e811c7?w=400&q=80' },
+            { ID_Alat: 'L-06', Nama_Alat: 'NERACA ANALITIK DIGITAL', Kategori: 'Elektronik', Stok_Tersedia: 3, Kondisi: 'Baik', Spesifikasi: 'Digital Presisi', Gambar_URL: 'https://images.unsplash.com/photo-1615632194954-41d399fb82d6?w=400&q=80' }
+        ];
+
+        // INISIALISASI AWAL
+        function initApp() {
+            // Load theme
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            
+            // Load Local Data first for speed
+            const localAlat = localStorage.getItem(STORAGE_KEY_ALAT);
+            const localPinjam = localStorage.getItem(STORAGE_KEY_PINJAM);
+            
+            if (localAlat) dataAlatLab = JSON.parse(localAlat);
+            else dataAlatLab = [...defaultAlat];
+            
+            if (localPinjam) dataPeminjaman = JSON.parse(localPinjam);
+
+            saveDataLocally();
+            
+            // Start Auto Sync Cloud
+            syncNowFromCloud();
+            
+            // Setup Listeners
+            document.getElementById('searchInput').addEventListener('input', filterKatalog);
+            document.getElementById('categoryFilter').addEventListener('change', filterKatalog);
+            document.getElementById('searchAdminStok').addEventListener('input', renderAdminStok);
+        }
+
+        // TEMA GELAP / TERANG
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            if (html.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // ======= GOOGLE SHEET CLOUD SYNC LOGIC =======
+        
+        async function syncNowFromCloud() {
+            if(isSyncing) return;
+            isSyncing = true;
+            updateSyncStatus('<i class="fas fa-sync fa-spin text-blue-500 mr-1"></i> Sinkronisasi...', 'text-blue-500');
+
+            try {
+                const response = await fetch(`${DEFAULT_SCRIPT_URL}?action=get_all&sheetId=${GOOGLE_SHEET_ID}`);
+                if (!response.ok) throw new Error("Gagal menghubungi server Apps Script.");
+                
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                if (data.inventaris && data.inventaris.length > 0) {
+                    dataAlatLab = data.inventaris;
+                } else {
+                    // Jika sheet kosong, biarkan default, lalu dorong ke cloud
+                    pushToCloud();
+                }
+
+                if (data.peminjaman) {
+                    dataPeminjaman = data.peminjaman;
+                }
+                
+                saveDataLocally();
+                updateSyncStatus('<i class="fas fa-cloud-check text-green-500 mr-1"></i> Data Tersinkronisasi', 'text-gray-500');
+
+            } catch (err) {
+                console.error("Sync Pull Error:", err);
+                updateSyncStatus('<i class="fas fa-cloud-upload-alt text-yellow-500 mr-1"></i> Mode Offline Lokal', 'text-yellow-600');
+            } finally {
+                isSyncing = false;
+                filterKatalog();
+            }
+        }
+
+        async function pushToCloud() {
+            updateSyncStatus('<i class="fas fa-arrow-up text-blue-500 mr-1"></i> Menyimpan ke Cloud...', 'text-blue-500');
+            try {
+                const payload = {
+                    action: 'sync_all',
+                    sheetId: GOOGLE_SHEET_ID,
+                    inventaris: dataAlatLab,
+                    peminjaman: dataPeminjaman
+                };
+                
+                const response = await fetch(DEFAULT_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Pakai no-cors agar lolos CORS policy Google, tapi tidak bisa baca response body sukses
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                updateSyncStatus('<i class="fas fa-cloud-check text-green-500 mr-1"></i> Tersimpan di Cloud', 'text-gray-500');
+            } catch (err) {
+                console.error("Sync Push Error:", err);
+                updateSyncStatus('<i class="fas fa-exclamation-circle text-red-500 mr-1"></i> Gagal Simpan Cloud', 'text-red-500');
+            }
+        }
+
+        function updateSyncStatus(html, colorClass) {
+            const el = document.getElementById('syncStatus');
+            if(el) {
+                el.innerHTML = html;
+                el.className = `hidden sm:flex items-center text-xs font-semibold mr-2 ${colorClass}`;
+            }
+        }
+
+        function saveDataLocally() {
+            localStorage.setItem(STORAGE_KEY_ALAT, JSON.stringify(dataAlatLab));
+            localStorage.setItem(STORAGE_KEY_PINJAM, JSON.stringify(dataPeminjaman));
+            updateStats();
+        }
+
+        // ======= KATALOG & RENDER =======
+
+        function getDriveDirectUrl(url) {
+            if (!url) return '';
+            if (url.includes('drive.google.com')) {
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) {
+                    // Gunakan API thumbnail agar stabil, tidak hitam
+                    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                }
+            }
+            return url;
+        }
+
+        function switchMenu(tipe) {
+            currentMenu = tipe;
+            document.querySelectorAll('.menu-item').forEach(el => {
+                el.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-400');
+                el.classList.add('text-gray-600', 'dark:text-gray-300');
+            });
+            const activeEl = document.getElementById('menu-' + tipe);
+            activeEl.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-400');
+            activeEl.classList.remove('text-gray-600', 'dark:text-gray-300');
+
+            if(tipe === 'semua') {
+                document.getElementById('mainTitle').textContent = "Semua Katalog Inventaris";
+                document.getElementById('categoryFilter').value = 'Semua';
+                document.getElementById('categoryFilter').parentElement.classList.remove('hidden');
+            } else if (tipe === 'ruangan') {
+                document.getElementById('mainTitle').textContent = "Fasilitas Ruangan Lab";
+                document.getElementById('categoryFilter').value = 'Fasilitas Ruangan';
+                document.getElementById('categoryFilter').parentElement.classList.add('hidden');
+            } else if (tipe === 'alat') {
+                document.getElementById('mainTitle').textContent = "Peminjaman Alat";
+                document.getElementById('categoryFilter').value = 'Semua';
+                document.getElementById('categoryFilter').parentElement.classList.remove('hidden');
+            }
+            filterKatalog();
+        }
+
+        function filterKatalog() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let cat = document.getElementById('categoryFilter').value;
+            
+            // Override behavior jika menu alat
+            if (currentMenu === 'alat' && cat === 'Semua') {
+                 // Sembunyikan Fasilitas Ruangan saat di mode 'alat'
+            } else if (currentMenu === 'ruangan') {
+                cat = 'Fasilitas Ruangan';
+            }
+
+            const filtered = dataAlatLab.filter(alat => {
+                const matchSearch = alat.Nama_Alat.toLowerCase().includes(search) || alat.ID_Alat.toLowerCase().includes(search) || (alat.Spesifikasi && alat.Spesifikasi.toLowerCase().includes(search));
+                
+                let matchCat = false;
+                if (currentMenu === 'alat' && cat === 'Semua') {
+                    matchCat = alat.Kategori !== 'Fasilitas Ruangan';
+                } else {
+                    matchCat = (cat === 'Semua') || (alat.Kategori === cat);
+                }
+
+                return matchSearch && matchCat;
+            });
+
+            renderKatalog(filtered);
+        }
+
+        function renderKatalog(data) {
+            const container = document.getElementById('katalog-container');
+            container.innerHTML = ''; 
+
+            if(data.length === 0) {
+                container.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500"><i class="fas fa-box-open text-5xl mb-4 opacity-50"></i><p>Item tidak ditemukan.</p></div>';
+                return;
+            }
+
+            data.forEach(alat => {
+                const stokAman = parseInt(alat.Stok_Tersedia) > 0;
+                let kondisiText = alat.Kondisi || 'Baik';
+                
+                let statusBadge = '';
+                if (kondisiText === 'Rusak') statusBadge = 'bg-red-500 text-white';
+                else if (kondisiText === 'Kurang Baik') statusBadge = 'bg-yellow-500 text-white';
+                else if (!stokAman) statusBadge = 'bg-gray-500 text-white';
+                else statusBadge = 'bg-green-500 text-white';
+
+                let statusTeksInfo = kondisiText === 'Rusak' ? 'RUSAK' : (kondisiText === 'Kurang Baik' ? 'KURANG BAIK' : (!stokAman ? 'KOSONG' : 'TERSEDIA'));
+                
+                const isRuangan = alat.Kategori === 'Fasilitas Ruangan';
+                const textTombol = isRuangan ? '<i class="fas fa-door-open mr-1"></i> Pinjam Ruangan' : '<i class="fas fa-plus mr-1"></i> Keranjang';
+
+                // Cari qty yang sudah ada di keranjang untuk item ini
+                const inCart = cart.find(c => c.id === alat.ID_Alat);
+                const cartQtyText = inCart ? `<span class="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow z-20">Di keranjang: ${inCart.qty}</span>` : '';
+
+                const html = `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 hover:shadow-xl dark:shadow-none dark:hover:border-blue-500/50 transition-all duration-300 flex flex-col items-center text-center relative group wix-shadow">
+                        ${cartQtyText}
+                        <div class="absolute top-4 left-4 ${statusBadge} text-[10px] font-bold px-2.5 py-1 rounded shadow-sm z-10">
+                            ${statusTeksInfo}
+                        </div>
+                        <div class="w-full h-44 flex items-center justify-center mb-4 mt-6 bg-gray-50/50 dark:bg-slate-700/30 rounded-xl p-4 overflow-hidden relative group-hover:bg-blue-50 dark:group-hover:bg-slate-700/60 transition-colors">
+                            <img src="${getDriveDirectUrl(alat.Gambar_URL)}" alt="${alat.Nama_Alat}" class="max-h-full max-w-full object-contain drop-shadow-sm group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                        </div>
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500 font-bold mb-1 tracking-wider uppercase">${alat.Kategori}</p>
+                        <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
+                            ${alat.Nama_Alat}
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate w-full px-2" title="${alat.Spesifikasi || '-'}">${alat.Spesifikasi || '-'}</p>
+                        <p class="text-blue-600 dark:text-blue-400 font-bold text-sm mb-4 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-100 dark:border-blue-800/50">Stok: ${alat.Stok_Tersedia}</p>
+                        <button onclick="addToCart('${alat.ID_Alat}')" class="mt-auto w-full border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-600 dark:hover:bg-blue-500 hover:text-white py-2.5 text-sm font-bold rounded-xl transition-colors ${(!stokAman || kondisiText === 'Rusak') ? 'opacity-50 cursor-not-allowed border-gray-400 text-gray-400 hover:bg-transparent hover:text-gray-400' : ''}" ${(!stokAman || kondisiText === 'Rusak') ? 'disabled' : ''}>
+                            ${textTombol}
+                        </button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total-macam').textContent = dataAlatLab.length;
+            const totalUnit = dataAlatLab.reduce((sum, item) => sum + (parseInt(item.Stok_Tersedia) || 0), 0);
+            document.getElementById('stat-total-unit').textContent = totalUnit;
+            updateCartBadge();
+        }
+
+        // ======= SISTEM KERANJANG (MULTI-PINJAM) =======
+
+        function updateCartBadge() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const badge = document.getElementById('cartBadge');
+            badge.textContent = totalItems;
+            if(totalItems > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+
+            // Update badge di sidebar juga
+            const sideBadge = document.getElementById('sidebarCartBadge');
+            if(sideBadge) {
+                sideBadge.textContent = totalItems;
+                if(totalItems > 0) {
+                    sideBadge.classList.remove('hidden');
+                    sideBadge.classList.add('flex');
+                } else {
+                    sideBadge.classList.add('hidden');
+                    sideBadge.classList.remove('flex');
+                }
+            }
+
+            filterKatalog(); // update label quantity on cards
+        }
+
+        function addToCart(id) {
+            const itemIndex = dataAlatLab.findIndex(a => a.ID_Alat === id);
+            if(itemIndex === -1) return;
+            const alat = dataAlatLab[itemIndex];
+
+            // Cek kondisi dan stok
+            if (alat.Kondisi === 'Rusak' || parseInt(alat.Stok_Tersedia) <= 0) {
+                alert('Barang tidak tersedia atau rusak.');
+                return;
+            }
+
+            const cartIndex = cart.findIndex(c => c.id === id);
+            if (cartIndex !== -1) {
+                if (cart[cartIndex].qty < alat.Stok_Tersedia) {
+                    cart[cartIndex].qty += 1;
+                } else {
+                    alert(`Stok maksimal untuk ${alat.Nama_Alat} tercapai.`);
+                }
+            } else {
+                cart.push({
+                    id: id,
+                    nama: alat.Nama_Alat,
+                    kategori: alat.Kategori,
+                    maxQty: parseInt(alat.Stok_Tersedia),
+                    qty: 1
+                });
+            }
+            updateCartBadge();
+        }
+
+        function openCartModal() {
+            if(cart.length === 0) {
+                alert("Keranjang masih kosong. Silakan pilih alat/ruangan terlebih dahulu.");
+                return;
+            }
+            
+            renderCartItems();
+            document.getElementById('formCartCount').textContent = cart.reduce((s,i) => s + i.qty, 0);
+            
+            // Set auto data
+            document.getElementById('inputNomorPeminjam').value = 'PMJ-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTanggal').value = today;
+            document.getElementById('inputTanggalKembali').value = today;
+            
+            // FIX: Gunakan format jam HH:mm yang valid untuk input type="time"
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}`;
+            
+            document.getElementById('inputJamPinjam').value = timeString;
+            document.getElementById('inputJamKembali').value = timeString;
+
+            document.getElementById('cartModal').classList.remove('hidden');
+            document.getElementById('cartModal').classList.add('flex');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cartModal').classList.add('hidden');
+            document.getElementById('cartModal').classList.remove('flex');
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cartItemsContainer');
+            container.innerHTML = '';
+            
+            cart.forEach((item, index) => {
+                const isRuangan = item.kategori === 'Fasilitas Ruangan';
+                const qtyControl = isRuangan ? `<span class="text-sm font-bold w-6 text-center">1</span>` : `
+                    <button onclick="updateCartQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-slate-600 rounded-full hover:bg-gray-300 transition-colors">-</button>
+                    <span class="text-sm font-bold w-6 text-center dark:text-white">${item.qty}</span>
+                    <button onclick="updateCartQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-slate-600 rounded-full hover:bg-gray-300 transition-colors">+</button>
+                `;
+
+                const html = `
+                    <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 rounded-xl shadow-sm">
+                        <div class="flex-1 pr-4">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase">${item.kategori}</p>
+                            <p class="text-xs font-bold text-gray-800 dark:text-white line-clamp-1">${item.nama}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1">
+                                ${qtyControl}
+                            </div>
+                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 ml-2">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+            document.getElementById('formCartCount').textContent = cart.reduce((s,i) => s + i.qty, 0);
+            if(cart.length === 0) closeCartModal();
+        }
+
+        function updateCartQty(index, change) {
+            const item = cart[index];
+            const newQty = item.qty + change;
+            if (newQty > 0 && newQty <= item.maxQty) {
+                cart[index].qty = newQty;
+                renderCartItems();
+                updateCartBadge();
+            } else if (newQty > item.maxQty) {
+                alert('Melebihi stok tersedia!');
+            }
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCartItems();
+            updateCartBadge();
+        }
+
+        // ======= PROSES PEMINJAMAN =======
+
+        function reviewPeminjaman() {
+            // Validasi Input
+            const reqIds = [
+                {id: 'inputNama', name: 'Nama Lengkap'}, 
+                {id: 'inputNim', name: 'NIM / NIK'}, 
+                {id: 'inputWa', name: 'No WhatsApp'}, 
+                {id: 'inputProdi', name: 'Konsentrasi'}, 
+                {id: 'inputDosen', name: 'Dosen Pengampu'}, 
+                {id: 'inputTanggal', name: 'Tanggal Pinjam'}, 
+                {id: 'inputJamPinjam', name: 'Jam Pinjam'}, 
+                {id: 'inputTanggalKembali', name: 'Tanggal Kembali'}, 
+                {id: 'inputJamKembali', name: 'Jam Kembali'}, 
+                {id: 'inputKeperluan', name: 'Keperluan'}
+            ];
+            
+            for(let field of reqIds) {
+                const el = document.getElementById(field.id);
+                if(!el.value || !el.value.trim()) {
+                    alert(`Harap isi kolom: ${field.name}`);
+                    el.focus();
+                    return;
+                }
+            }
+
+            // Siapkan Draft
+            pendingLoanDraft = {
+                nomorPeminjam: document.getElementById('inputNomorPeminjam').value,
+                nama: document.getElementById('inputNama').value.trim(),
+                nim: document.getElementById('inputNim').value.trim(),
+                wa: document.getElementById('inputWa').value.trim(),
+                prodi: document.getElementById('inputProdi').value,
+                dosen: document.getElementById('inputDosen').value.trim(),
+                tanggalPinjam: document.getElementById('inputTanggal').value,
+                jamPinjam: document.getElementById('inputJamPinjam').value,
+                tanggalKembali: document.getElementById('inputTanggalKembali').value,
+                jamKembali: document.getElementById('inputJamKembali').value,
+                keperluan: document.getElementById('inputKeperluan').value.trim(),
+                waktu: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}),
+                items: JSON.parse(JSON.stringify(cart)), // deep copy
+                status: 'Menunggu Konfirmasi',
+                kondisiSaatKembali: '-'
+            };
+
+            // Tampilkan ke Modal Konfirmasi
+            document.getElementById('confNamaPeminjam').textContent = pendingLoanDraft.nama;
+            document.getElementById('confNimProdi').textContent = `${pendingLoanDraft.nim} - ${pendingLoanDraft.prodi}`;
+            document.getElementById('confWa').textContent = pendingLoanDraft.wa;
+            document.getElementById('confDosen').textContent = pendingLoanDraft.dosen;
+            document.getElementById('confTanggal').textContent = `${pendingLoanDraft.tanggalPinjam} (${pendingLoanDraft.jamPinjam}) s/d ${pendingLoanDraft.tanggalKembali} (${pendingLoanDraft.jamKembali})`;
+            
+            const ulItems = document.getElementById('confItems');
+            ulItems.innerHTML = '';
+            pendingLoanDraft.items.forEach(it => {
+                ulItems.insertAdjacentHTML('beforeend', `<li>${it.nama} (x${it.qty})</li>`);
+            });
+
+            document.getElementById('checkSetujuPinjam').checked = false;
+            
+            // Tutup keranjang, buka konfirmasi
+            closeCartModal();
+            document.getElementById('konfirmasiModal').classList.remove('hidden');
+            document.getElementById('konfirmasiModal').classList.add('flex');
+        }
+
+        function submitPeminjaman() {
+            if(!document.getElementById('checkSetujuPinjam').checked) {
+                alert("Harap centang persetujuan dan konfirmasi ke WA Hotline Lab terlebih dahulu.");
+                return;
+            }
+
+            // Kurangi Stok Alat Sementara (Pending)
+            pendingLoanDraft.items.forEach(itemCart => {
+                const alatObj = dataAlatLab.find(a => a.ID_Alat === itemCart.id);
+                if(alatObj) {
+                    alatObj.Stok_Tersedia = parseInt(alatObj.Stok_Tersedia) - itemCart.qty;
+                }
+            });
+
+            // Simpan Data Peminjaman
+            dataPeminjaman.unshift(pendingLoanDraft);
+            saveDataLocally();
+            pushToCloud();
+
+            // Sembunyikan Modal Konfirmasi
+            document.getElementById('konfirmasiModal').classList.add('hidden');
+            document.getElementById('konfirmasiModal').classList.remove('flex');
+
+            // Susun Tampilan Tiket
+            let receiptItemsHtml = '';
+            pendingLoanDraft.items.forEach(it => {
+                receiptItemsHtml += `<li>${it.nama} (x${it.qty})</li>`;
+            });
+
+            document.getElementById('receiptDetailBox').innerHTML = `
+                <p><strong>Peminjam:</strong> ${pendingLoanDraft.nama} (${pendingLoanDraft.nim})</p>
+                <p><strong>Konsentrasi:</strong> ${pendingLoanDraft.prodi}</p>
+                <p><strong>Dosen:</strong> ${pendingLoanDraft.dosen}</p>
+                <p><strong>Nomor PMJ:</strong> ${pendingLoanDraft.nomorPeminjam}</p>
+                <p><strong>Item Dipinjam:</strong></p>
+                <ul class="list-disc pl-5 mt-1 text-xs text-blue-700">${receiptItemsHtml}</ul>
+                <p class="mt-2 text-xs"><strong>Keperluan:</strong> ${pendingLoanDraft.keperluan}</p>
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                    <p><strong>Waktu Pinjam:</strong> ${pendingLoanDraft.tanggalPinjam} (${pendingLoanDraft.jamPinjam})</p>
+                    <p><strong>Waktu Kembali:</strong> ${pendingLoanDraft.tanggalKembali} (${pendingLoanDraft.jamKembali})</p>
+                </div>
+            `;
+
+            // Tampilkan Tiket
+            document.getElementById('buktiPinjamModal').classList.remove('hidden');
+            document.getElementById('buktiPinjamModal').classList.add('flex');
+        }
+
+        function tutupBuktiDanReset() {
+            document.getElementById('buktiPinjamModal').classList.add('hidden');
+            document.getElementById('buktiPinjamModal').classList.remove('flex');
+            
+            // Reset Forms & Cart
+            cart = [];
+            updateCartBadge();
+            document.querySelectorAll('#cartModal input:not([readonly]), #cartModal textarea').forEach(el => el.value = '');
+            document.getElementById('inputProdi').value = '';
+            
+            filterKatalog();
+            alert("Peminjaman berhasil diajukan! Harap tunggu konfirmasi petugas di Lab.");
+        }
+
+        // ======= LOGIN PETUGAS =======
+        
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginModal').classList.add('flex');
+            document.getElementById('inputPassword').value = '';
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginModal').classList.remove('flex');
+        }
+
+        function togglePasswordVisibility(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconElement.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                iconElement.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function verifyLogin() {
+            const pass = document.getElementById('inputPassword').value;
+            if (pass === 'fikomm123') { // Password petugas
+                closeLoginModal();
+                localStorage.setItem('petugasMode', 'true');
+                applyPetugasMode();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logoutPetugas() {
+            localStorage.removeItem('petugasMode');
+            window.location.reload();
+        }
+
+        function applyPetugasMode() {
+            if (localStorage.getItem('petugasMode') === 'true') {
+                document.getElementById('petugasMenuContainer').classList.remove('hidden');
+                document.getElementById('btn-login-petugas').classList.add('hidden');
+                document.getElementById('btn-logout-petugas').classList.remove('hidden');
+                document.getElementById('btn-logout-petugas').classList.add('flex');
+            }
+        }
+
+        // ======= PANEL ADMIN / PETUGAS =======
+
+        function openPetugasPanel() {
+            document.getElementById('petugasPanelModal').classList.remove('hidden');
+            document.getElementById('petugasPanelModal').classList.add('flex');
+            switchAdminTab('tab-peminjaman');
+        }
+        function closePetugasPanel() {
+            document.getElementById('petugasPanelModal').classList.add('hidden');
+            document.getElementById('petugasPanelModal').classList.remove('flex');
+        }
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.admin-tab').forEach(el => {
+                el.classList.remove('text-blue-600', 'border-blue-600');
+                el.classList.add('text-gray-500', 'border-transparent', 'dark:text-gray-400');
+            });
+            const activeTab = document.getElementById('btn-' + tabId);
+            activeTab.classList.remove('text-gray-500', 'border-transparent', 'dark:text-gray-400');
+            activeTab.classList.add('text-blue-600', 'border-blue-600');
+
+            if(tabId === 'tab-peminjaman') renderAdminPeminjaman();
+            if(tabId === 'tab-stok') renderAdminStok();
+        }
+
+        // TAB 1: Kelola Peminjaman
+        function renderAdminPeminjaman() {
+            const tbody = document.getElementById('tablePeminjamanBody');
+            tbody.innerHTML = '';
+            
+            let statMenunggu = 0, statDipinjam = 0, statSelesai = 0;
+
+            if(dataPeminjaman.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-gray-400">Belum ada riwayat peminjaman.</td></tr>';
+            } else {
+                dataPeminjaman.forEach((item, index) => {
+                    let statusBadge, actionBtns = '';
+                    if (item.status === 'Menunggu Konfirmasi') {
+                        statMenunggu++;
+                        statusBadge = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                        actionBtns = `
+                            <button onclick="setujuiPinjam(${index})" class="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-bold hover:bg-blue-700 mb-1 w-full text-center">Setujui</button>
+                            <button onclick="tolakPinjam(${index})" class="px-3 py-1 text-gray-500 hover:text-red-600 rounded text-xs font-medium w-full text-center">Tolak</button>
+                        `;
+                    } else if (item.status === 'Sedang Dipinjam') {
+                        statDipinjam++;
+                        statusBadge = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+                        actionBtns = `
+                            <select id="kondisiKembali-${index}" class="w-full text-[10px] mb-1 p-1 rounded border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none">
+                                <option value="Baik">Kembali: Baik</option>
+                                <option value="Kurang Baik">Kembali: Krg Baik</option>
+                                <option value="Rusak">Kembali: Rusak</option>
+                            </select>
+                            <button onclick="selesaikanPinjam(${index})" class="px-3 py-1.5 bg-green-600 text-white rounded text-xs font-bold hover:bg-green-700 w-full text-center">Selesai</button>
+                        `;
+                    } else {
+                        statSelesai++;
+                        statusBadge = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+                        actionBtns = `<button onclick="batalkanPengembalian(${index})" class="text-[10px] text-gray-400 hover:text-red-500 underline">Batalkan Kembalian</button>`;
+                    }
+
+                    // Susun items
+                    let itemText = '';
+                    if(item.items && Array.isArray(item.items)) {
+                        itemText = item.items.map(it => `- ${it.nama} (x${it.qty})`).join('<br>');
+                    } else {
+                        itemText = "- Data lama";
+                    }
+
+                    const row = `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                            <td class="py-3 px-4 text-xs align-top">
+                                <span class="font-bold text-gray-800 dark:text-white block">${item.tanggalPinjam} ${item.jamPinjam || ''}</span>
+                                <span class="text-[10px] text-gray-500 dark:text-gray-400 block mb-1">Kembali: ${item.tanggalKembali} ${item.jamKembali || ''}</span>
+                                <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${statusBadge}">${item.status}</span>
+                                ${item.kondisiSaatKembali && item.kondisiSaatKembali !== '-' ? `<span class="block mt-1 text-[10px] font-bold text-red-500">Kondisi: ${item.kondisiSaatKembali}</span>` : ''}
+                            </td>
+                            <td class="py-3 px-4 align-top">
+                                <p class="text-sm font-bold text-gray-800 dark:text-white">${item.nama}</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">${item.nim} &bull; ${item.prodi}</p>
+                                <p class="text-[10px] text-blue-600 dark:text-blue-400"><i class="fab fa-whatsapp"></i> ${item.wa}</p>
+                                <p class="text-[10px] text-gray-500 mt-1">PMJ: ${item.nomorPeminjam} &bull; Dosen: ${item.dosen}</p>
+                            </td>
+                            <td class="py-3 px-4 align-top">
+                                <div class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                                    ${itemText}
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1 italic">Keperluan: ${item.keperluan}</p>
+                            </td>
+                            <td class="py-3 px-4 text-right align-top w-28">
+                                ${actionBtns}
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+
+            document.getElementById('stat-menunggu').textContent = statMenunggu;
+            document.getElementById('stat-dipinjam').textContent = statDipinjam;
+            document.getElementById('stat-selesai').textContent = statSelesai;
+        }
+
+        // Aksi Petugas pada Peminjaman
+        function setujuiPinjam(index) {
+            dataPeminjaman[index].status = 'Sedang Dipinjam';
+            saveDataLocally(); pushToCloud();
+            renderAdminPeminjaman();
+        }
+
+        function tolakPinjam(index) {
+            if(confirm("Tolak pengajuan ini? Stok akan dikembalikan ke sistem.")) {
+                const pj = dataPeminjaman[index];
+                pj.status = 'Ditolak';
+                // Kembalikan stok
+                if(pj.items) {
+                    pj.items.forEach(it => {
+                        const alatObj = dataAlatLab.find(a => a.ID_Alat === it.id);
+                        if(alatObj) alatObj.Stok_Tersedia = parseInt(alatObj.Stok_Tersedia) + it.qty;
+                    });
+                }
+                saveDataLocally(); pushToCloud(); filterKatalog();
+                renderAdminPeminjaman();
+            }
+        }
+
+        function selesaikanPinjam(index) {
+            const kondisi = document.getElementById(`kondisiKembali-${index}`).value;
+            const pj = dataPeminjaman[index];
+            
+            pj.status = 'Sudah Kembali';
+            pj.kondisiSaatKembali = kondisi;
+            
+            // Kembalikan Stok, dan update status alat jika rusak/kurang baik
+            if(pj.items) {
+                pj.items.forEach(it => {
+                    const alatObj = dataAlatLab.find(a => a.ID_Alat === it.id);
+                    if(alatObj) {
+                        alatObj.Stok_Tersedia = parseInt(alatObj.Stok_Tersedia) + it.qty;
+                        if(kondisi === 'Rusak' || kondisi === 'Kurang Baik') {
+                            alatObj.Kondisi = kondisi;
+                        }
+                    }
+                });
+            }
+
+            saveDataLocally(); pushToCloud(); filterKatalog();
+            renderAdminPeminjaman();
+        }
+
+        function batalkanPengembalian(index) {
+            if(confirm("Batalkan status selesai ini? Status akan kembali 'Sedang Dipinjam' dan stok akan ditarik lagi.")) {
+                const pj = dataPeminjaman[index];
+                // Tarik stok lagi
+                if(pj.items) {
+                    pj.items.forEach(it => {
+                        const alatObj = dataAlatLab.find(a => a.ID_Alat === it.id);
+                        if(alatObj) alatObj.Stok_Tersedia = parseInt(alatObj.Stok_Tersedia) - it.qty;
+                    });
+                }
+                pj.status = 'Sedang Dipinjam';
+                pj.kondisiSaatKembali = '-';
+                saveDataLocally(); pushToCloud(); filterKatalog();
+                renderAdminPeminjaman();
+            }
+        }
+
+        // TAB 2: Kelola Stok
+        function renderAdminStok() {
+            const search = document.getElementById('searchAdminStok').value.toLowerCase();
+            const tbody = document.getElementById('tableStokBody');
+            tbody.innerHTML = '';
+
+            const filtered = dataAlatLab.filter(a => a.Nama_Alat.toLowerCase().includes(search) || a.ID_Alat.toLowerCase().includes(search));
+            
+            filtered.forEach((alat, i) => {
+                // Find original index to update array correctly
+                const originalIndex = dataAlatLab.findIndex(x => x.ID_Alat === alat.ID_Alat);
+                
+                const btnKondisiText = alat.Kondisi || 'Baik';
+                let btnKondisiClass = '';
+                if(btnKondisiText === 'Rusak') btnKondisiClass = 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200';
+                else if(btnKondisiText === 'Kurang Baik') btnKondisiClass = 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200';
+                else btnKondisiClass = 'bg-green-100 text-green-600 border-green-200 hover:bg-green-200';
+
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                        <td class="py-2 px-4 text-xs font-mono text-gray-500 dark:text-gray-400">${alat.ID_Alat}</td>
+                        <td class="py-2 px-4">
+                            <p class="text-xs font-bold text-gray-800 dark:text-white line-clamp-1">${alat.Nama_Alat}</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">${alat.Kategori}</p>
+                        </td>
+                        <td class="py-2 px-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="ubahStok(${originalIndex}, -1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-slate-600 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors"><i class="fas fa-minus text-[10px]"></i></button>
+                                <span class="font-bold text-sm w-6 text-center dark:text-white">${alat.Stok_Tersedia}</span>
+                                <button onclick="ubahStok(${originalIndex}, 1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-slate-600 rounded-full hover:bg-green-100 hover:text-green-600 transition-colors"><i class="fas fa-plus text-[10px]"></i></button>
+                            </div>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <button onclick="toggleKondisi(${originalIndex})" class="px-3 py-1 border rounded text-[10px] font-bold w-full transition-colors ${btnKondisiClass}">
+                                ${btnKondisiText}
+                            </button>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <button onclick="hapusAlat(${originalIndex})" class="text-gray-400 hover:text-red-600 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        function ubahStok(index, delta) {
+            let newVal = parseInt(dataAlatLab[index].Stok_Tersedia) + delta;
+            if (newVal < 0) newVal = 0;
+            dataAlatLab[index].Stok_Tersedia = newVal;
+            saveDataLocally(); pushToCloud(); filterKatalog(); renderAdminStok();
+        }
+
+        function toggleKondisi(index) {
+            const current = dataAlatLab[index].Kondisi || 'Baik';
+            if (current === 'Baik') dataAlatLab[index].Kondisi = 'Kurang Baik';
+            else if (current === 'Kurang Baik') dataAlatLab[index].Kondisi = 'Rusak';
+            else dataAlatLab[index].Kondisi = 'Baik';
+            
+            saveDataLocally(); pushToCloud(); filterKatalog(); renderAdminStok();
+        }
+
+        function hapusAlat(index) {
+            if(confirm(`Yakin ingin menghapus ${dataAlatLab[index].Nama_Alat} dari sistem?`)) {
+                dataAlatLab.splice(index, 1);
+                saveDataLocally(); pushToCloud(); filterKatalog(); renderAdminStok();
+            }
+        }
+
+        // TAB 3: Tambah Baru
+        function previewNewImage() {
+            const url = document.getElementById('newGambar').value;
+            const img = document.getElementById('previewImage');
+            const ph = document.getElementById('previewPlaceholder');
+            if(url) {
+                img.src = getDriveDirectUrl(url);
+                img.classList.remove('hidden');
+                ph.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                ph.classList.remove('hidden');
+            }
+        }
+
+        function generateNewId(kategori) {
+            let pfx = 'ALT';
+            if(kategori.includes('Kamera') || kategori === 'Broadcasting') pfx = 'CAM';
+            else if(kategori === 'Audio') pfx = 'AUD';
+            else if(kategori === 'Lighting') pfx = 'LIG';
+            else if(kategori === 'Lensa') pfx = 'LNS';
+            else if(kategori === 'Fasilitas Ruangan') pfx = 'RNG';
+            
+            const num = Math.floor(Math.random() * 900) + 100;
+            document.getElementById('newId').value = `${pfx}-${num}`;
+        }
+
+        document.getElementById('newKategori').addEventListener('change', function() {
+            generateNewId(this.value);
+        });
+
+        function tambahAlatBaru() {
+            if(!document.getElementById('newId').value) generateNewId(document.getElementById('newKategori').value);
+            
+            const newItem = {
+                ID_Alat: document.getElementById('newId').value,
+                Nama_Alat: document.getElementById('newNama').value.toUpperCase(),
+                Kategori: document.getElementById('newKategori').value,
+                Stok_Tersedia: parseInt(document.getElementById('newStok').value),
+                Kondisi: 'Baik',
+                Spesifikasi: document.getElementById('newSpek').value,
+                Gambar_URL: document.getElementById('newGambar').value
+            };
+
+            dataAlatLab.unshift(newItem);
+            saveDataLocally(); pushToCloud(); filterKatalog();
+            
+            alert('Item baru berhasil ditambahkan!');
+            document.getElementById('formTambahAlat').reset();
+            previewNewImage();
+            generateNewId('Broadcasting');
+            switchAdminTab('tab-stok');
+        }
+
+        // Start
+        window.onload = () => {
+            initApp();
+            applyPetugasMode();
+            generateNewId('Broadcasting');
+        };
+    </script>
+</body>
+</html>
